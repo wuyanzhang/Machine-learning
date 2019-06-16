@@ -1,30 +1,20 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# 函数说明：创建单层决策树的数据集
-def loadSimpleData():
-    datMat = np.mat([[1., 2.1],
-                        [1.5, 1.6],
-                        [1.3, 1.],
-                        [1., 1.],
-                        [2., 1.]])
-    classLabels = [1.0, 1.0, -1.0, -1.0, 1.0]
-    return datMat, classLabels
-
-# 函数说明：数据可视化
-def showDataSet(dataMat,labelMat):
-    data_plus = []  # 正样本
-    data_minus = []  # 负样本
-    for i in range(len(dataMat)):
-        if labelMat[i] > 0:
-            data_plus.append(dataMat[i])
-        else:
-            data_minus.append(dataMat[i])
-    data_plus_np = np.array(data_plus)  # 转换为numpy矩阵
-    data_minus_np = np.array(data_minus)  # 转换为numpy矩阵
-    plt.scatter(np.transpose(data_plus_np)[0], np.transpose(data_plus_np)[1])  # 正样本散点图
-    plt.scatter(np.transpose(data_minus_np)[0], np.transpose(data_minus_np)[1])  # 负样本散点图
-    plt.show()
+# 函数说明：加载数据集
+def loadDataSet(filename):
+    numFeat = len((open(filename).readline().split('\t')))
+    dataMat = []
+    labelMat = []
+    fr = open(filename)
+    for line in fr.readlines():
+        lineArr = []
+        curline = line.strip().split('\t')
+        for i in range(numFeat-1):
+            lineArr.append(float(curline[i]))
+        dataMat.append(lineArr)
+        labelMat.append(float(curline[-1]))
+    return dataMat,labelMat
 
 # 函数说明：单层决策树分类函数
 def stumpClassify(dataMatrix,dimen,threshVal,threshIneq):
@@ -103,14 +93,13 @@ def adaClassify(datToClass,classifierArr):
     return np.sign(aggClassEst)
 
 if __name__ == '__main__':
-    dataArr,classLabels = loadSimpleData()
-    weakClassArr,aggClassEst = adaBoost(dataArr,classLabels)
-    print(adaClassify([[0, 0], [5, 5]], weakClassArr))
-    # print(weakClassArr) # 每一个弱分类器的信息
-    # print(aggClassEst) # 最后的预测分类标签
-    # D = np.mat(np.ones((5,1))/5)
-    # bestStump,minError,bestClasEst = buildStump(dataArr,classLabels,D)
-    # print('bestStump:\n', bestStump)
-    # print('minError:\n', minError)
-    # print('bestClasEst:\n', bestClasEst)
-    # showDataSet(dataArr,classLabels)
+    dataArr, LabelArr = loadDataSet('horseColicTraining2.txt')
+    weakClassArr, aggClassEst = adaBoost(dataArr, LabelArr)
+    testArr, testLabelArr = loadDataSet('horseColicTest2.txt')
+    print(weakClassArr)
+    predictions = adaClassify(dataArr, weakClassArr)
+    errArr = np.mat(np.ones((len(dataArr), 1)))
+    print('训练集的错误率:%.3f%%' % float(errArr[predictions != np.mat(LabelArr).T].sum() / len(dataArr) * 100))
+    predictions = adaClassify(testArr, weakClassArr)
+    errArr = np.mat(np.ones((len(testArr), 1)))
+    print('测试集的错误率:%.3f%%' % float(errArr[predictions != np.mat(testLabelArr).T].sum() / len(testArr) * 100))
